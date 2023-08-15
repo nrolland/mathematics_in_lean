@@ -8,11 +8,12 @@ open Real
 #check (le_trans : a ≤ b → b ≤ c → a ≤ c)
 
 section
-variable (h : a ≤ b) (h' : b ≤ c)
-
 #check (le_refl : ∀ a : Real, a ≤ a)
 #check (le_refl a : a ≤ a)
 #check (le_trans : a ≤ b → b ≤ c → a ≤ c)
+
+variable (h : a ≤ b) (h' : b ≤ c) --  when hypotheses h : a ≤ b and h' : b ≤ c are in the context, all the following work:
+
 #check (le_trans h : b ≤ c → a ≤ c)
 #check (le_trans h h' : a ≤ c)
 
@@ -20,8 +21,14 @@ end
 
 example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z := by
   apply le_trans
-  · apply h₀
+  apply h₀
+  apply h₁
+
+example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z := by
+  apply le_trans
+  . apply h₀
   . apply h₁
+
 
 example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z := by
   apply le_trans h₀
@@ -32,6 +39,9 @@ example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z :=
 
 example (x : ℝ) : x ≤ x := by
   apply le_refl
+
+example (x : ℝ) : x ≤ x := by
+  exact le_refl x
 
 example (x : ℝ) : x ≤ x :=
   le_refl x
@@ -44,7 +54,21 @@ example (x : ℝ) : x ≤ x :=
 
 -- Try this.
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
-  sorry
+  have h₅ : a < c := lt_of_le_of_lt h₀ h₁
+  have h₆ : c < e := lt_of_le_of_lt h₂ h₃
+  exact lt_trans h₅ h₆
+
+
+
+example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
+  apply lt_trans
+  . apply lt_of_le_of_lt h₀ h₁
+  . apply lt_of_le_of_lt h₂ h₃
+
+
+example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
+  exact lt_trans (lt_of_le_of_lt h₀ h₁) (lt_of_le_of_lt h₂ h₃)
+
 
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
   linarith
@@ -100,8 +124,15 @@ example : 0 ≤ a ^ 2 := by
   -- apply?
   exact sq_nonneg a
 
+
 example (h : a ≤ b) : c - exp b ≤ c - exp a := by
-  sorry
+  apply add_le_add_left
+  apply neg_le_neg_iff.mpr
+  apply exp_le_exp.mpr h
+
+
+example (h : a ≤ b) : c - exp b ≤ c - exp a := by
+  linarith [exp_le_exp.mpr h]
 
 example : 2 * a * b ≤ a ^ 2 + b ^ 2 := by
   have h : 0 ≤ a ^ 2 - 2 * a * b + b ^ 2
@@ -124,7 +155,17 @@ example : 2 * a * b ≤ a ^ 2 + b ^ 2 := by
   linarith
 
 example : |a * b| ≤ (a ^ 2 + b ^ 2) / 2 := by
-  sorry
+  have h : 0 ≤ a ^ 2 - 2 * a * b + b ^ 2
+  calc
+    a ^ 2 - 2 * a * b + b ^ 2 = (a - b) ^ 2 := by ring
+    _ ≥ 0 := by apply pow_two_nonneg
+  have h'' :  a * b ≤ (a ^ 2 + b ^ 2) / 2 := by linarith
+  have h' : 0 ≤ a ^ 2 + 2 * a * b + b ^ 2
+  calc
+    a ^ 2 + 2 * a * b + b ^ 2 = (a + b )^ 2 := by ring
+    _ ≥ 0 := by apply pow_two_nonneg
+  have h''' :  - (a * b) ≤ (a ^ 2 + b ^ 2) / 2 := by linarith
+  apply abs_le'.mpr ⟨ h'', h'''⟩
 
+#check abs_le.mpr
 #check abs_le'.mpr
-

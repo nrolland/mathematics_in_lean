@@ -107,4 +107,3 @@ example (x y : X) : 0 ≤ dist x y := by
   sorry
 
 end
-
