@@ -75,6 +75,10 @@ variable (a b c : ℝ)
 #check mul_comm a
 #check mul_comm
 
+
+example (a b : ℝ ) : a - b = a + -b := by ring
+
+
 end
 
 section

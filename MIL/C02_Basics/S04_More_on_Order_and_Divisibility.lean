@@ -120,8 +120,20 @@ example : min (min a b) c = min a (min b c) := by
 
 theorem aux : min a b + c ≤ min (a + c) (b + c) := by
   apply le_min
-  apply add_le_add_right (min_le_left _ _)
-  apply add_le_add_right (min_le_right _ _)
+  . exact add_le_add_right (min_le_left a b) _
+  . exact add_le_add_right (min_le_right _ _) _
+
+example : min a b + c = min (a + c) (b + c) := by
+  apply le_antisymm
+  . apply le_min
+    . apply add_le_add_right (min_le_left _ _)
+    . apply add_le_add_right (min_le_right _ _)
+  . rcases min_choice a b with h | h
+    . rw [h]
+      apply min_le_left
+    . rw [h]
+      apply min_le_right
+
 
 example : min a b + c = min (a + c) (b + c) := by
   apply le_antisymm

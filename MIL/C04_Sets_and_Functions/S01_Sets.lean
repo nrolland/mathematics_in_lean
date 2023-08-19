@@ -45,10 +45,24 @@ example : s ∩ (t ∪ u) ⊆ s ∩ t ∪ s ∩ u := by
 example : s ∩ (t ∪ u) ⊆ s ∩ t ∪ s ∩ u := by
   rintro x ⟨xs, xt | xu⟩
   · left; exact ⟨xs, xt⟩
-  . right; exact ⟨xs, xu⟩
+  . right
+    exact ⟨xs, xu⟩
 
 example : s ∩ t ∪ s ∩ u ⊆ s ∩ (t ∪ u) := by
-  sorry
+  rintro x ( ⟨xs,xt⟩ | ⟨xs,xu⟩ )
+  {.  exact ⟨xs , by left; exact xt⟩}
+  exact ⟨xs, by right; exact xu⟩
+
+
+example : s ∩ t ∪ s ∩ u ⊆ s ∩ (t ∪ u) := by
+  rintro x ( ⟨xs,xt⟩ | ⟨xs,xu⟩ )
+  {.  use xs
+      left; exact xt}
+  use xs
+  right; exact xu
+
+
+
 example : (s \ t) \ u ⊆ s \ (t ∪ u) := by
   intro x xstu
   have xs : x ∈ s := xstu.1.1
@@ -68,10 +82,41 @@ example : (s \ t) \ u ⊆ s \ (t ∪ u) := by
   rintro (xt | xu) <;> contradiction
 
 example : s \ (t ∪ u) ⊆ (s \ t) \ u := by
-  sorry
+  rintro x ⟨xs, xntu ⟩
+  have g : x ∈ s \ t := by use xs; rintro xt;
+                           have xtu : x ∈ t ∪ u := by left; exact xt
+                           contradiction
+  use g
+  rintro xnu
+  have k : x ∉ u := sorry
+  contradiction
+
+example : s \ (t ∪ u) ⊆ (s \ t) \ u := by
+  rintro x ⟨xs, xntu ⟩
+  have g : x ∈ s \ t := by use xs
+                           rintro xt;
+                           exact (by left; exact xt) |> xntu
+  use g
+  rintro xu
+  exact xntu (by right; exact xu)
+
+
+#check (_ ∘ _)
+
+#check (_ >>> _)
+
+
+
+example : s \ (t ∪ u) ⊆ (s \ t) \ u := by
+  rintro x ⟨xs, xntu ⟩
+  constructor
+  . use xs; exact xntu ∘ Or.inl
+  . exact xntu ∘ Or.inr
+
+
 example : s ∩ t = t ∩ s := by
   ext x
-  simp only [mem_inter_iff]
+  -- simp only [mem_inter_iff]
   constructor
   · rintro ⟨xs, xt⟩; exact ⟨xt, xs⟩
   . rintro ⟨xt, xs⟩; exact ⟨xs, xt⟩
@@ -87,18 +132,60 @@ example : s ∩ t = t ∩ s := by
   . rintro x ⟨xt, xs⟩; exact ⟨xs, xt⟩
 
 example : s ∩ t = t ∩ s :=
-    Subset.antisymm sorry sorry
-example : s ∩ (s ∪ t) = s := by
-  sorry
+    have h : ∀ {a b : Set α}, a ∩ b ⊆ b ∩ a := by
+          intro a b x ⟨xa, xb⟩
+          exact ⟨xb, xa⟩
+    have gi : ∀ {a b : Set α}, a ∩ b ⊆ b ∩ a :=  fun {a b x} ⟨xa, xb⟩ ↦ ⟨xb, xa⟩
+    have ge : ∀ a b : Set α, a ∩ b ⊆ b ∩ a :=  fun a b x ⟨xa, xb⟩  ↦ ⟨xb, xa⟩
+    have k : s ∩ t ⊆ t ∩ s := fun x ⟨xs, xt ⟩  ↦ ⟨xt,xs⟩
+    Subset.antisymm (ge s t) (@gi t s)
+    -- Subset.antisymm (by apply ge) (by apply gi)
 
-example : s ∪ s ∩ t = s := by
-  sorry
+example : s ∩ t = t ∩ s :=
+    have ge : ∀ a b : Set α, a ∩ b ⊆ b ∩ a :=  fun a b x ⟨xa, xb⟩  ↦ ⟨xb, xa⟩
+    Subset.antisymm (ge s t) (ge t s)
 
-example : s \ t ∪ t = s ∪ t := by
-  sorry
+example : s ∩ t = t ∩ s :=
+    Subset.antisymm (fun x ⟨xa, xb⟩  ↦ ⟨xb, xa⟩) (fun x ⟨xa, xb⟩  ↦ ⟨xb, xa⟩)
+    -- Subset.antisymm (by apply ge) (by apply gi)
 
-example : s \ t ∪ t \ s = (s ∪ t) \ (s ∩ t) := by
-  sorry
+
+
+example : s ∩ (s ∪ t) = s :=
+ Subset.antisymm (fun x ⟨xs, _⟩ ↦ xs ) (fun x xs ↦ ⟨xs, Or.inl xs⟩)
+
+
+example : s ∪ s ∩ t = s :=
+  Subset.antisymm (fun x ↦ by rintro (xs | ⟨xs, _⟩) <;> exact xs)
+                  (fun x xs ↦ Or.inl xs)
+
+example : s \ t ∪ t = s ∪ t :=
+  Subset.antisymm
+  (fun x ↦ by rintro ( ⟨xs, xnt ⟩ | xt) ; exact Or.inl xs ; exact Or.inr xt)
+  (fun x ↦ by rintro (xs | xt)
+              . { by_cases h : x ∈ t
+                  exact Or.inr h
+                  exact Or.inl ⟨xs, h⟩}
+              exact Or.inr xt)
+
+example : s \ t ∪ t \ s = (s ∪ t) \ (s ∩ t) :=
+  Subset.antisymm
+  (fun x ↦ by rintro ( ⟨ xs, xnt⟩ | ⟨xt, xns ⟩ )
+              use Or.inl xs
+              exact xnt ∘ And.right
+              use Or.inr xt
+              exact xns ∘ And.left  )
+  (fun x ↦ by rintro ⟨xsort, xnst⟩
+              show x ∈ s \ t ∪ t \ s
+              rcases xsort with xs | xt
+              . left
+                use xs
+                exact xnst ∘ And.intro xs
+              right
+              use xt
+              exact xnst ∘ (And.intro . xt))
+
+
 
 def evens : Set ℕ :=
   { n | Even n }
@@ -240,4 +327,3 @@ example : ⋂₀ s = ⋂ t ∈ s, t := by
   rfl
 
 end
-

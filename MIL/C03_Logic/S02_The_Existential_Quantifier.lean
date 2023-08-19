@@ -40,8 +40,12 @@ example (ubf : FnHasUb f) (ubg : FnHasUb g) : FnHasUb fun x ↦ f x + g x := by
   use a + b
   apply fnUb_add ubfa ubgb
 
+
 example (lbf : FnHasLb f) (lbg : FnHasLb g) : FnHasLb fun x ↦ f x + g x := by
-  sorry
+  rcases lbf with ⟨a, lbfa⟩
+  rcases lbg with ⟨b, lbgb⟩
+  use a + b
+  exact fun x ↦ add_le_add (lbfa x) (lbgb x)
 
 example {c : ℝ} (ubf : FnHasUb f) (h : c ≥ 0) : FnHasUb fun x ↦ c * f x := by
   sorry
@@ -91,6 +95,13 @@ variable {α : Type _} [CommRing α]
 def SumOfSquares (x : α) :=
   ∃ a b, x = a ^ 2 + b ^ 2
 
+-- x * y
+-- = ( a ^ 2 + b ^ 2 ) * ( c ^ 2 + d ^ 2)
+-- =  a2 * c2 + a2 * d2 + b2 * c2 + b2 * d2
+-- =  a2 * c2 + b2 * d2 + a2 * d2 + b2 * c2
+-- =  (a * c  - b * d)2 + (a * d + b * c)
+
+
 theorem sumOfSquares_mul {x y : α} (sosx : SumOfSquares x) (sosy : SumOfSquares y) :
     SumOfSquares (x * y) := by
   rcases sosx with ⟨a, b, xeq⟩
@@ -118,8 +129,10 @@ example (divab : a ∣ b) (divbc : b ∣ c) : a ∣ c := by
   use d * e; ring
 
 example (divab : a ∣ b) (divac : a ∣ c) : a ∣ b + c := by
-  sorry
-
+  rcases divab with ⟨d, rfl⟩
+  rcases divac with ⟨e, rfl⟩
+  use d + e
+  ring
 end
 
 section
@@ -127,12 +140,22 @@ section
 open Function
 
 example {c : ℝ} : Surjective fun x ↦ x + c := by
-  intro x
-  use x - c
+  intro y
+  use y - c
   dsimp; ring
 
+#check mul_div_cancel'
+
 example {c : ℝ} (h : c ≠ 0) : Surjective fun x ↦ c * x := by
-  sorry
+    intro y
+    use y / c
+    dsimp
+    rw [@mul_div_cancel' _ _ _ _ h]
+example {c : ℝ} (h : c ≠ 0) : Surjective fun x ↦ c * x := fun y ↦ by
+    use y / c
+    field_simp [h]
+    ring
+
 
 example (x y : ℝ) (h : x - y ≠ 0) : (x ^ 2 - y ^ 2) / (x - y) = x + y := by
   field_simp [h]
@@ -151,7 +174,18 @@ open Function
 variable {α : Type _} {β : Type _} {γ : Type _}
 variable {g : β → γ} {f : α → β}
 
-example (surjg : Surjective g) (surjf : Surjective f) : Surjective fun x ↦ g (f x) := by
-  sorry
+example (surjg : Surjective g) (surjf : Surjective f) : Surjective fun x ↦ g (f x) := fun y ↦ by
+  rcases surjg y with ⟨ g1y, hg1y ⟩
+  rcases surjf g1y with ⟨ f1g1y, hf1g1y⟩
+  use f1g1y
+  dsimp
+  rw [hf1g1y, hg1y]
+
+
+example (surjg : Surjective g) (surjf : Surjective f) : Surjective fun x ↦ g (f x) := fun y ↦ by
+  rcases surjg y with ⟨ g1y, rfl ⟩
+  rcases surjf g1y with ⟨ f1g1y, rfl⟩
+  use f1g1y
+
 
 end

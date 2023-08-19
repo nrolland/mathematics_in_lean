@@ -99,6 +99,16 @@ example (h : ∀ x y z : α, x ⊔ y ⊓ z = (x ⊔ y) ⊓ (x ⊔ z)) : a ⊓ (b
   rw [h, @sup_comm _ _ (a ⊓ b), absorb2, @sup_comm _ _ (a ⊓ b), h, ← inf_assoc, @sup_comm _ _ c a,
     absorb1, sup_comm]
 
+
+
+example (h : ∀ x y z : α, x ⊓ (y ⊔ z) = (x ⊓ y) ⊔ (x ⊓ z)) : a ⊔ (b ⊓ c) = (a ⊔ b) ⊓ (a ⊔ c) := by
+
+  exact calc
+    a ⊔ (b ⊓ c) = a ⊔ (c ⊓ a ⊔ c ⊓ b):= by sorry
+              _ = a ⊔ c ⊓ (a ⊔ b) := by rw [h]
+              _ = (a ⊔ b) ⊓ a ⊔ (a ⊔ b) ⊓ c  :=  by simp only [inf_sup_self, inf_comm]
+              _ = (a ⊔ b) ⊓ (a ⊔ c)          := by rw [h]
+
 end
 
 section
@@ -133,4 +143,3 @@ example (x y : X) : 0 ≤ dist x y :=by
   linarith [dist_comm x y]
 
 end
-
